@@ -18,10 +18,10 @@ export default function AppImage() {
   const [showModal, setShowModal] = useState(false);
   const [largeImageURL, setLargeImageURL] = useState('');
   const [totalHits, setTotalHits] = useState(0);
-  const [hitsPerPage, setHitsPerPage] = useState(12);
-
+  const [hitsPerPage, setHitsPerPage] = useState(0);
 
   useEffect(() => {
+  setHitsPerPage(12);
 
       if (inputValue.trim() === '') {
         return;
