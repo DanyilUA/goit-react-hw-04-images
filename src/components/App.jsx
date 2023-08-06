@@ -1,111 +1,90 @@
 import { imageFetch } from 'utilities/fetch';
-
-import { Component } from 'react';
+import { useState, useEffect } from 'react';
 import SearchBar from './Searchbar/Searchbar';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { ImageGallery } from './ImageGallery/ImageGallery';
+import ImageGallery from './ImageGallery/ImageGallery';
 import { Button } from 'components/Button/Button';
 import { Loader } from 'components/Loader/Loader';
 import { toast } from 'react-toastify';
 import Modal from 'components/Modal/Modal';
 
-export class App extends Component {
-  state = {
-    inputValue: '',
-    loading: false,
-    images: [],
-    currentPage: 1,
-    showModal: false,
-    largeImageURL: '',
-    totalHits: 0,
-    hitsPerPage: 12,
-  };
+export default function AppImage() {
 
-  componentDidUpdate(prevProps, prevState) {
-    console.log('componentDidUpdate');
+  const [inputValue, setInputValue] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [images, setImages] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [showModal, setShowModal] = useState(false);
+  const [largeImageURL, setLargeImageURL] = useState('');
+  const [totalHits, setTotalHits] = useState(0);
+  const [hitsPerPage, setHitsPerPage] = useState(12);
 
-    let shouldWeFetch = prevState.inputValue !== this.state.inputValue ||
-      prevState.currentPage !== this.state.currentPage;
-    console.log(this.state.currentPage);
+
+  useEffect(() => {
+
+      if (inputValue.trim() === '') {
+        return;
+      }
+
+      imageFetch(inputValue, currentPage)
+        .then(data => {
+          if (data.hits.length === 0) {
+            toast.error('thats a great plan Walter that a genius plan');
+            setLoading(false);
+
+          } else {
+        setImages(prevState => [...prevState, ...data.hits]);
+            setLoading(false);
+            setTotalHits(data.totalHits);
+          }
+        })
+        .catch(error => {
+          console.error('Error fetching images:', error);
+          setLoading(false);
+        });
     
-    if (shouldWeFetch) {
-      console.log(prevState.inputValue);
-      console.log(this.state.inputValue);
+  }, [inputValue, currentPage]);
 
 
-        imageFetch(this.state.inputValue, this.state.currentPage)
-          .then(data => {
-            if (data.hits.length === 0) {
-              toast.error('thats a great plan Walter that a genius plan');
-              this.setState({
-                totalHits: 0,
-                loading: false,
-              });
-            } else {
-              this.setState(prevState => ({
-                images: [...prevState.images, ...data.hits],
-                loading: false,
-                totalHits: data.totalHits,
-              }));
-            }
-          })
-          .catch(error => {
-            console.error('Error fetching images:', error);
-            this.setState({ loading: false });
-          });
-      
-    }
-  }
-
-  handleFormSubmit = inputValue => {
-    this.setState({ inputValue, currentPage: 1, images: [] });
+  const handleFormSubmit = inputValue => {
+    setInputValue(inputValue);
+    setImages([]);
+    setCurrentPage(1);
   };
 
-  buttonLoadMore = () => {
-    this.setState(
-      prevState => ({
-        currentPage: prevState.currentPage + 1,
-        loading: true
-      })
-    );
+  const buttonLoadMore = () => {
+    setLoading(true);
+    setCurrentPage(prevState => prevState + 1);
   };
 
-  handlerImgClick = largeImageURL => {
-    this.setState({
-      largeImageURL,
-      showModal: true,
-    });
+  const handlerImgClick = largeImageURL => {
+    setLargeImageURL(largeImageURL)
+    setShowModal(true);
   };
 
-  toggleModal = () => {
-    this.setState(state => ({
-      showModal: !state.showModal,
-    }));
+  const toggleModal = () => {
+    setShowModal(!showModal);
   };
 
-  render() {
-    const { images, loading, showModal, largeImageURL, currentPage } =
-      this.state;
-    const lastPage = Math.ceil(this.state.totalHits / this.state.hitsPerPage);
-    const showLoadMoreButton =
-      currentPage < lastPage && !loading && images.length > 0;
+
+    const lastPage = Math.ceil(totalHits / hitsPerPage);
+    const showLoadMoreButton = currentPage < lastPage && !loading && images.length > 0;
 
     return (
       <div>
-        <SearchBar onSubmit={this.handleFormSubmit} />
+        <SearchBar onSubmit={handleFormSubmit} />
         <ImageGallery
           images={images}
-          onClick={this.handlerImgClick}
-          handlerImgClick={this.handlerImgClick}
+          onClick={handlerImgClick}
+          handlerImgClick={handlerImgClick}
         />
-        {showLoadMoreButton && <Button onClick={this.buttonLoadMore} />}
+        {showLoadMoreButton && <Button onClick={buttonLoadMore} />}
         {showModal && (
-          <Modal onClose={this.toggleModal} largeImageURL={largeImageURL} />
+          <Modal onClose={toggleModal} largeImageURL={largeImageURL} />
         )}
         {loading && <Loader />}
         <ToastContainer autoClose={3000} />
       </div>
     );
   }
-}
