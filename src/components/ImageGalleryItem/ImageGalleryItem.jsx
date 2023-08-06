@@ -9,7 +9,7 @@ export function Item({ image, handlerImgClick }) {
       <img
         src={webformatURL}
         alt={tags}
-        className={css.imageGalleryItemImage}
+        className={css.imageGalleryItem__image}
         onClick={handlerImgClick}
       />
     </li>
